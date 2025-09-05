@@ -2,7 +2,7 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <title>Super Rekenmachine</title>
+  <title>Universele Wiskunde Rekenmachine</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
   <style>
     body {
@@ -18,35 +18,34 @@
       padding: 20px;
       border-radius: 15px;
       box-shadow: 0px 5px 20px rgba(0,0,0,0.3);
-      width: 380px;
+      width: 450px;
     }
     .display {
       background: #000;
       color: #0f0;
-      font-size: 1.5em;
-      text-align: right;
+      font-size: 1.3em;
+      text-align: left;
       padding: 15px;
       border-radius: 10px;
       margin-bottom: 15px;
-      min-height: 40px;
+      min-height: 50px;
       overflow-x: auto;
+      white-space: nowrap;
     }
     .buttons {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 10px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
     }
     button {
-      padding: 15px;
+      padding: 12px;
       font-size: 1em;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       cursor: pointer;
       transition: 0.2s;
     }
-    button:hover {
-      opacity: 0.8;
-    }
+    button:hover { opacity: 0.8; }
     .operator { background: #ff9500; color: white; }
     .number { background: #333; color: white; }
     .special { background: #999; color: black; }
@@ -58,54 +57,58 @@
   <div class="calculator">
     <div id="display" class="display">0</div>
     <div class="buttons">
+      <!-- Basis -->
       <button class="special" onclick="clearDisplay()">C</button>
       <button class="special" onclick="backspace()">⌫</button>
       <button class="special" onclick="insert('(')">(</button>
       <button class="special" onclick="insert(')')">)</button>
-      <button class="special" onclick="insert('/')">÷</button>
+      <button class="operator" onclick="insert('/')">÷</button>
+      <button class="operator" onclick="insert('*')">×</button>
 
       <button class="number" onclick="insert('7')">7</button>
       <button class="number" onclick="insert('8')">8</button>
       <button class="number" onclick="insert('9')">9</button>
-      <button class="operator" onclick="insert('*')">×</button>
+      <button class="operator" onclick="insert('-')">−</button>
+      <button class="operator" onclick="insert('+')">+</button>
       <button class="special" onclick="insert('^')">xʸ</button>
 
       <button class="number" onclick="insert('4')">4</button>
       <button class="number" onclick="insert('5')">5</button>
       <button class="number" onclick="insert('6')">6</button>
-      <button class="operator" onclick="insert('-')">−</button>
       <button class="special" onclick="insert('sqrt(')">√</button>
+      <button class="special" onclick="insert('log(')">log</button>
+      <button class="special" onclick="insert('ln(')">ln</button>
 
       <button class="number" onclick="insert('1')">1</button>
       <button class="number" onclick="insert('2')">2</button>
       <button class="number" onclick="insert('3')">3</button>
-      <button class="operator" onclick="insert('+')">+</button>
-      <button class="special" onclick="insert('pi')">π</button>
+      <button class="special" onclick="insert('sin(')">sin</button>
+      <button class="special" onclick="insert('cos(')">cos</button>
+      <button class="special" onclick="insert('tan(')">tan</button>
 
       <button class="special" onclick="toggleSign()">±</button>
       <button class="number wide" onclick="insert('0')">0</button>
       <button class="number" onclick="insert('.')">.</button>
-      <button class="equal" onclick="calculate()">=</button>
-
-      <button class="special" onclick="insert('1/2')">½</button>
-      <button class="special" onclick="insert('1/3')">⅓</button>
-      <button class="special" onclick="insert('e')">e</button>
-      <button class="special" onclick="insert('sin(')">sin</button>
-      <button class="special" onclick="insert('cos(')">cos</button>
-
-      <button class="special" onclick="insert('tan(')">tan</button>
-      <button class="special" onclick="insert('log(')">log</button>
-      <button class="special" onclick="insert('ln(')">ln</button>
       <button class="special" onclick="insert('%')">%</button>
       <button class="special" onclick="insert('!')">n!</button>
+      <button class="equal" onclick="calculate()">=</button>
+
+      <!-- Extra -->
+      <button class="special" onclick="insert('pi')">π</button>
+      <button class="special" onclick="insert('e')">e</button>
+      <button class="special" onclick="insert('i')">i</button>
+      <button class="special" onclick="insert('1/2')">½</button>
+      <button class="special" onclick="insert('1/3')">⅓</button>
+      <button class="special" onclick="insert('exp(')">exp</button>
     </div>
   </div>
 
   <script>
     const display = document.getElementById('display');
+    let lastAnswer = 0;
 
     function insert(value) {
-      if (display.innerText === "0") {
+      if (display.innerText === "0" || display.innerText === "Error") {
         display.innerText = value;
       } else {
         display.innerText += value;
@@ -130,16 +133,21 @@
 
     function calculate() {
       try {
-        // math.js evaluatie (ondersteunt breuken en functies)
-        let expr = display.innerText.replace(/÷/g, "/").replace(/×/g, "*");
+        let expr = display.innerText
+          .replace(/÷/g, "/")
+          .replace(/×/g, "*")
+          .replace(/x/g, "*"); // maakt ook 'x' geldig als vermenigvuldiging
+
         let result = math.evaluate(expr);
 
-        // Fractions netjes tonen
+        // Fractions en complex netjes weergeven
         if (math.typeOf(result) === "Fraction") {
           display.innerText = result.n + "/" + result.d;
         } else {
           display.innerText = result.toString();
         }
+
+        lastAnswer = result;
       } catch {
         display.innerText = "Error";
       }
