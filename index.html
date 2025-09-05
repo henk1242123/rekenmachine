@@ -10,46 +10,51 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      background: #f0f0f0;
-      font-family: Arial, sans-serif;
+      background: linear-gradient(135deg, #1e1e2f, #2a2a40);
+      font-family: "Segoe UI", Arial, sans-serif;
     }
     .calculator {
-      background: #222;
+      background: #2d2d44;
       padding: 20px;
-      border-radius: 15px;
-      box-shadow: 0px 5px 20px rgba(0,0,0,0.3);
-      width: 480px;
+      border-radius: 20px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+      width: 500px;
     }
     .display {
-      background: #000;
-      color: #0f0;
-      font-size: 1.2em;
-      text-align: left;
-      padding: 15px;
-      border-radius: 10px;
-      margin-bottom: 15px;
-      min-height: 50px;
+      background: #1a1a2e;
+      color: #00ffb7;
+      font-size: 1.4em;
+      text-align: right;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      min-height: 60px;
       overflow-x: auto;
       white-space: nowrap;
+      box-shadow: inset 0 0 10px rgba(0,255,183,0.2);
     }
     .buttons {
       display: grid;
       grid-template-columns: repeat(6, 1fr);
-      gap: 8px;
+      gap: 12px;
     }
     button {
-      padding: 12px;
-      font-size: 0.95em;
+      padding: 16px;
+      font-size: 1em;
       border: none;
-      border-radius: 8px;
+      border-radius: 12px;
       cursor: pointer;
-      transition: 0.2s;
+      transition: all 0.2s ease;
+      font-weight: bold;
     }
-    button:hover { opacity: 0.8; }
-    .operator { background: #ff9500; color: white; }
-    .number   { background: #333; color: white; }
-    .special  { background: #999; color: black; }
-    .equal    { background: #34c759; color: white; grid-column: span 2; }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+    .operator { background: #ff6f3c; color: white; }
+    .number   { background: #3a3a5e; color: white; }
+    .special  { background: #555577; color: #eee; }
+    .equal    { background: #00c853; color: white; grid-column: span 2; font-size: 1.2em; }
     .wide     { grid-column: span 2; }
   </style>
 </head>
@@ -63,7 +68,7 @@
       <button class="special" onclick="insert('(')">(</button>
       <button class="special" onclick="insert(')')">)</button>
       <button class="operator" onclick="insert('/')">÷</button>
-      <button class="operator" onclick="insert('*')">×</button>
+      <button class="operator" onclick="insert('x')">×</button>
 
       <button class="number" onclick="insert('7')">7</button>
       <button class="number" onclick="insert('8')">8</button>
@@ -143,11 +148,10 @@
         let expr = display.innerText
           .replace(/÷/g, "/")
           .replace(/×/g, "*")
-          .replace(/x/g, "*"); // ook 'x' geldig als vermenigvuldiging
+          .replace(/x/g, "*"); // maakt ook 'x' geldig
 
         let result = math.evaluate(expr);
 
-        // Fractions netjes
         if (math.typeOf(result) === "Fraction") {
           display.innerText = result.n + "/" + result.d;
         } else {
