@@ -12,49 +12,50 @@
       height: 100vh;
       background: linear-gradient(135deg, #1e1e2f, #2a2a40);
       font-family: "Segoe UI", Arial, sans-serif;
+      margin: 0;
     }
     .calculator {
       background: #2d2d44;
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.5);
-      width: 500px;
+      padding: 15px;
+      border-radius: 15px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      width: 400px; /* kleiner en compacter */
     }
     .display {
       background: #1a1a2e;
       color: #00ffb7;
-      font-size: 1.4em;
+      font-size: 1.2em;
       text-align: right;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      min-height: 60px;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+      min-height: 50px;
       overflow-x: auto;
       white-space: nowrap;
-      box-shadow: inset 0 0 10px rgba(0,255,183,0.2);
+      box-shadow: inset 0 0 8px rgba(0,255,183,0.2);
     }
     .buttons {
       display: grid;
-      grid-template-columns: repeat(6, 1fr);
-      gap: 12px;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
     }
     button {
-      padding: 16px;
-      font-size: 1em;
+      padding: 12px;
+      font-size: 0.9em;
       border: none;
-      border-radius: 12px;
+      border-radius: 10px;
       cursor: pointer;
-      transition: all 0.2s ease;
+      transition: all 0.15s ease;
       font-weight: bold;
     }
     button:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.3);
     }
     .operator { background: #ff6f3c; color: white; }
     .number   { background: #3a3a5e; color: white; }
     .special  { background: #555577; color: #eee; }
-    .equal    { background: #00c853; color: white; grid-column: span 2; font-size: 1.2em; }
+    .equal    { background: #00c853; color: white; grid-column: span 2; font-size: 1em; }
     .wide     { grid-column: span 2; }
   </style>
 </head>
@@ -62,62 +63,57 @@
   <div class="calculator">
     <div id="display" class="display">0</div>
     <div class="buttons">
-      <!-- Basis -->
       <button class="special" onclick="clearDisplay()">C</button>
       <button class="special" onclick="backspace()">⌫</button>
       <button class="special" onclick="insert('(')">(</button>
       <button class="special" onclick="insert(')')">)</button>
       <button class="operator" onclick="insert('/')">÷</button>
-      <button class="operator" onclick="insert('x')">×</button>
 
       <button class="number" onclick="insert('7')">7</button>
       <button class="number" onclick="insert('8')">8</button>
       <button class="number" onclick="insert('9')">9</button>
+      <button class="operator" onclick="insert('x')">×</button>
       <button class="operator" onclick="insert('-')">−</button>
-      <button class="operator" onclick="insert('+')">+</button>
-      <button class="special" onclick="insert('^')">xʸ</button>
 
       <button class="number" onclick="insert('4')">4</button>
       <button class="number" onclick="insert('5')">5</button>
       <button class="number" onclick="insert('6')">6</button>
-      <button class="special" onclick="insert('sqrt(')">√</button>
-      <button class="special" onclick="insert('log(')">log</button>
-      <button class="special" onclick="insert('ln(')">ln</button>
+      <button class="operator" onclick="insert('+')">+</button>
+      <button class="special" onclick="insert('^')">xʸ</button>
 
       <button class="number" onclick="insert('1')">1</button>
       <button class="number" onclick="insert('2')">2</button>
       <button class="number" onclick="insert('3')">3</button>
-      <button class="special" onclick="insert('sin(')">sin</button>
-      <button class="special" onclick="insert('cos(')">cos</button>
-      <button class="special" onclick="insert('tan(')">tan</button>
-
-      <button class="special" onclick="toggleSign()">±</button>
-      <button class="number wide" onclick="insert('0')">0</button>
-      <button class="number" onclick="insert('.')">.</button>
+      <button class="special" onclick="insert('.')">.</button>
       <button class="special" onclick="insert('%')">%</button>
-      <button class="special" onclick="insert('!')">n!</button>
+
+      <button class="number wide" onclick="insert('0')">0</button>
+      <button class="special" onclick="toggleSign()">±</button>
       <button class="equal" onclick="calculate()">=</button>
 
       <!-- Extra functies -->
       <button class="special" onclick="insert('pi')">π</button>
       <button class="special" onclick="insert('e')">e</button>
-      <button class="special" onclick="insert('i')">i</button>
+      <button class="special" onclick="insert('sqrt(')">√</button>
+      <button class="special" onclick="insert('log(')">log</button>
+      <button class="special" onclick="insert('ln(')">ln</button>
+
+      <button class="special" onclick="insert('sin(')">sin</button>
+      <button class="special" onclick="insert('cos(')">cos</button>
+      <button class="special" onclick="insert('tan(')">tan</button>
       <button class="special" onclick="insert('asin(')">asin</button>
       <button class="special" onclick="insert('acos(')">acos</button>
-      <button class="special" onclick="insert('atan(')">atan</button>
 
+      <button class="special" onclick="insert('atan(')">atan</button>
+      <button class="special" onclick="insert('!')">n!</button>
+      <button class="special" onclick="insert('i')">i</button>
       <button class="special" onclick="insert('exp(')">exp</button>
-      <button class="special" onclick="insert('det([')">det([</button>
-      <button class="special" onclick="insert('inv([')">inv([</button>
-      <button class="special" onclick="insert('cross([')">cross([</button>
-      <button class="special" onclick="insert('dot([')">dot([</button>
       <button class="special" onclick="insert('abs(')">abs</button>
     </div>
   </div>
 
   <script>
     const display = document.getElementById('display');
-    let lastAnswer = 0;
 
     function insert(value) {
       if (display.innerText === "0" || display.innerText === "Error") {
@@ -148,21 +144,29 @@
         let expr = display.innerText
           .replace(/÷/g, "/")
           .replace(/×/g, "*")
-          .replace(/x/g, "*"); // maakt ook 'x' geldig
+          .replace(/x/g, "*");
 
         let result = math.evaluate(expr);
-
         if (math.typeOf(result) === "Fraction") {
           display.innerText = result.n + "/" + result.d;
         } else {
           display.innerText = result.toString();
         }
-
-        lastAnswer = result;
       } catch {
         display.innerText = "Error";
       }
     }
+
+    // Toetsenbord support
+    document.addEventListener("keydown", (e) => {
+      const key = e.key;
+
+      if (!isNaN(key)) insert(key); // cijfers
+      else if ("+-*/().%^".includes(key)) insert(key); // operators
+      else if (key === "Enter") calculate();
+      else if (key === "Backspace") backspace();
+      else if (key === "Delete") clearDisplay();
+    });
   </script>
 </body>
 </html>
