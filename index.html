@@ -1,202 +1,200 @@
+```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-<meta charset="UTF-8">
-<title>Rekenmachine met Geschiedenis</title>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.11.0/math.min.js"></script>
-<style>
-  body {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    background: linear-gradient(135deg, #1e1e2f, #2a2a40);
-    font-family: "Segoe UI", Arial, sans-serif;
-    margin: 0;
-    padding: 20px;
-  }
-  .calculator {
-    background: #2d2d44;
-    padding: 15px;
-    border-radius: 15px;
-    width: 400px;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-  }
-  .display {
-    background: #1a1a2e;
-    color: #00ffb7;
-    font-size: 1.2em;
-    text-align: right;
-    padding: 15px;
-    border-radius: 10px;
-    margin-bottom: 15px;
-    min-height: 50px;
-    overflow-x: auto;
-    white-space: nowrap;
-    box-shadow: inset 0 0 8px rgba(0,255,183,0.2);
-  }
-  .buttons {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 8px;
-  }
-  button {
-    padding: 12px;
-    font-size: 0.9em;
-    border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: all 0.15s ease;
-  }
-  button:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 3px 8px rgba(0,0,0,0.3);
-  }
-  .operator { background: #ff6f3c; color: white; }
-  .number   { background: #3a3a5e; color: white; }
-  .special  { background: #555577; color: #eee; }
-  .equal    { background: #00c853; color: white; grid-column: span 2; font-size: 1em; }
-  .wide     { grid-column: span 2; }
-  .history {
-    background: #1a1a2e;
-    color: #0ff;
-    margin-left: 20px;
-    padding: 10px;
-    border-radius: 10px;
-    width: 200px;
-    max-height: 500px;
-    overflow-y: auto;
-  }
-  .history-item {
-    padding: 5px;
-    cursor: pointer;
-    border-bottom: 1px solid #333;
-  }
-  .history-item:hover {
-    background: #333366;
-  }
-</style>
+  <meta charset="UTF-8">
+  <title>Review Systeem - Pixlguy</title>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, arrayUnion } 
+      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // Firebase config van jou
+    const firebaseConfig = {
+      apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
+      authDomain: "today-6828b.firebaseapp.com",
+      projectId: "today-6828b",
+      storageBucket: "today-6828b.firebasestorage.app",
+      messagingSenderId: "107632990693",
+      appId: "1:107632990693:web:e6aae5432e5d4ee655770c"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const reviewForm = document.getElementById("reviewForm");
+    const reviewList = document.getElementById("reviewList");
+    const overlayList = document.getElementById("overlayList");
+    const overlay = document.getElementById("overlay");
+    const closeBtn = document.getElementById("closeOverlay");
+
+    // Nieuwe review toevoegen
+    reviewForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const name = e.target.name.value;
+      const message = e.target.message.value;
+
+      await addDoc(collection(db, "reviews"), {
+        name, message,
+        createdAt: new Date(),
+        reactions: []
+      });
+
+      reviewForm.reset();
+    });
+
+    // Realtime reviews
+    onSnapshot(collection(db, "reviews"), (snapshot) => {
+      reviewList.innerHTML = "";
+      overlayList.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const reviewHTML = `
+          <div class="review">
+            <p><strong>${data.name}</strong></p>
+            <p>${data.message}</p>
+            <p class="reactions"><em>Reacties:</em> ${data.reactions?.map(r => r.text + " " + (r.emoji || "")).join(", ") || "Geen"}</p>
+            <button onclick="addReaction('${docSnap.id}')">➕ Reactie</button>
+          </div>
+        `;
+        reviewList.innerHTML += reviewHTML;
+        overlayList.innerHTML += reviewHTML;
+      });
+    });
+
+    // Reactie toevoegen
+    window.addReaction = async (id) => {
+      const text = prompt("Typ je reactie:");
+      const emoji = prompt("Voeg een emoji toe (optioneel):");
+      if (!text) return;
+      const reviewRef = doc(db, "reviews", id);
+      await updateDoc(reviewRef, {
+        reactions: arrayUnion({ text, emoji })
+      });
+    };
+
+    // Overlay toggle met Ctrl + \
+    document.addEventListener("keydown", (e) => {
+      if (e.ctrlKey && e.key === "\\") {
+        overlay.style.display = overlay.style.display === "flex" ? "none" : "flex";
+      }
+    });
+    closeBtn.addEventListener("click", () => {
+      overlay.style.display = "none";
+    });
+  </script>
+
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #66a6ff, #89f7fe);
+      background-attachment: fixed;
+      color: #222;
+    }
+    header {
+      display: flex;
+      align-items: center;
+      background: rgba(255,255,255,0.8);
+      padding: 10px 20px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    header img {
+      height: 50px;
+      margin-right: 15px;
+    }
+    header h1 {
+      font-size: 24px;
+      color: #004aad;
+      text-shadow: 1px 1px 2px white;
+    }
+    form {
+      margin: 20px;
+      padding: 15px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    input, textarea, button {
+      width: 100%;
+      margin: 5px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #004aad;
+      color: white;
+      cursor: pointer;
+      border: none;
+    }
+    button:hover {
+      background: #003380;
+    }
+    .review {
+      background: rgba(255,255,255,0.85);
+      margin: 10px 20px;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+    }
+    .reactions {
+      font-size: 0.9em;
+      color: #444;
+    }
+    /* Overlay */
+    #overlay {
+      display: none;
+      position: fixed;
+      top:0; left:0; width:100%; height:100%;
+      background: rgba(0,0,50,0.9);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+      color: white;
+    }
+    #overlay-content {
+      background: #222;
+      padding: 20px;
+      border-radius: 12px;
+      width: 80%;
+      max-height: 80%;
+      overflow-y: auto;
+    }
+    #closeOverlay {
+      background: red;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 <body>
-  <div class="calculator">
-    <div id="display" class="display">0</div>
-    <div class="buttons">
-      <button class="special" onclick="clearDisplay()">C</button>
-      <button class="special" onclick="backspace()">⌫</button>
-      <button class="special" onclick="insert('(')">(</button>
-      <button class="special" onclick="insert(')')">)</button>
-      <button class="operator" onclick="insert('/')">÷</button>
+  <header>
+    <img src="logo.png" alt="Server Logo">
+    <h1>Pixlguy Reviews</h1>
+  </header>
 
-      <button class="number" onclick="insert('7')">7</button>
-      <button class="number" onclick="insert('8')">8</button>
-      <button class="number" onclick="insert('9')">9</button>
-      <button class="operator" onclick="insert('*')">×</button>
-      <button class="operator" onclick="insert('-')">−</button>
+  <form id="reviewForm">
+    <input type="text" name="name" placeholder="Jouw naam" required>
+    <textarea name="message" placeholder="Jouw review..." required></textarea>
+    <button type="submit">Verstuur Review</button>
+  </form>
 
-      <button class="number" onclick="insert('4')">4</button>
-      <button class="number" onclick="insert('5')">5</button>
-      <button class="number" onclick="insert('6')">6</button>
-      <button class="operator" onclick="insert('+')">+</button>
-      <button class="special" onclick="insert('^')">xʸ</button>
+  <h2 style="margin-left:20px;">Laatste Reviews</h2>
+  <div id="reviewList"></div>
 
-      <button class="number" onclick="insert('1')">1</button>
-      <button class="number" onclick="insert('2')">2</button>
-      <button class="number" onclick="insert('3')">3</button>
-      <button class="special" onclick="insert('.')">.</button>
-      <button class="special" onclick="insert('%')">%</button>
-
-      <button class="number wide" onclick="insert('0')">0</button>
-      <button class="special" onclick="toggleSign()">±</button>
-      <button class="equal" onclick="calculate()">=</button>
-
-      <button class="special" onclick="insert('pi')">π</button>
-      <button class="special" onclick="insert('e')">e</button>
-      <button class="special" onclick="insert('sqrt(')">√</button>
-      <button class="special" onclick="insert('log(')">log</button>
-      <button class="special" onclick="insert('ln(')">ln</button>
-
-      <button class="special" onclick="insert('sin(')">sin</button>
-      <button class="special" onclick="insert('cos(')">cos</button>
-      <button class="special" onclick="insert('tan(')">tan</button>
-      <button class="special" onclick="insert('asin(')">asin</button>
-      <button class="special" onclick="insert('acos(')">acos</button>
-
-      <button class="special" onclick="insert('atan(')">atan</button>
-      <button class="special" onclick="insert('!')">n!</button>
-      <button class="special" onclick="insert('i')">i</button>
-      <button class="special" onclick="insert('exp(')">exp</button>
-      <button class="special" onclick="insert('abs(')">abs</button>
+  <!-- Overlay -->
+  <div id="overlay">
+    <div id="overlay-content">
+      <button id="closeOverlay">Sluiten</button>
+      <h2>Alle Reviews</h2>
+      <div id="overlayList"></div>
     </div>
   </div>
-
-  <div class="history" id="history">
-    <h3>Geschiedenis</h3>
-  </div>
-
-<script>
-const display = document.getElementById('display');
-const historyDiv = document.getElementById('history');
-let history = [];
-
-function insert(value) {
-  if (display.innerText === "0" || display.innerText === "Error") {
-    display.innerText = value;
-  } else {
-    display.innerText += value;
-  }
-}
-
-function clearDisplay() {
-  display.innerText = "0";
-}
-
-function backspace() {
-  display.innerText = display.innerText.slice(0, -1) || "0";
-}
-
-function toggleSign() {
-  if (display.innerText.startsWith("-")) {
-    display.innerText = display.innerText.slice(1);
-  } else if (display.innerText !== "0") {
-    display.innerText = "-" + display.innerText;
-  }
-}
-
-function calculate() {
-  try {
-    let expr = display.innerText.replace(/÷/g,'/').replace(/×/g,'*').replace(/x/g,'*');
-    let result = math.evaluate(expr);
-    display.innerText = math.typeOf(result) === "Fraction" ? result.n + "/" + result.d : result.toString();
-
-    // Voeg toe aan geschiedenis
-    history.unshift({expr: expr, result: display.innerText});
-    if(history.length > 20) history.pop();
-    renderHistory();
-  } catch {
-    display.innerText = "Error";
-  }
-}
-
-function renderHistory() {
-  historyDiv.innerHTML = "<h3>Geschiedenis</h3>";
-  history.forEach(item => {
-    const div = document.createElement('div');
-    div.className = "history-item";
-    div.textContent = `${item.expr} = ${item.result}`;
-    div.onclick = () => display.innerText = item.expr;
-    historyDiv.appendChild(div);
-  });
-}
-
-// Toetsenbord ondersteuning
-document.addEventListener("keydown", (e) => {
-  const key = e.key;
-  if (!isNaN(key)) insert(key);
-  else if ("+-*/().%^".includes(key)) insert(key);
-  else if (key === "Enter") calculate();
-  else if (key === "Backspace") backspace();
-  else if (key === "Delete") clearDisplay();
-});
-</script>
 </body>
 </html>
+```
