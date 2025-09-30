@@ -7,10 +7,10 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
     import { 
-      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, setDoc, getDoc, arrayUnion 
+      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, setDoc, getDoc 
     } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
 
-    // Jouw Firebase configuratie
+    // Firebase config
     const firebaseConfig = {
       apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
       authDomain: "today-6828b.firebaseapp.com",
@@ -34,24 +34,21 @@
       const message = e.target.message.value;
 
       await addDoc(collection(db, "reviews"), {
-        name, message, createdAt: new Date(), reactions: []
+        name, message, createdAt: new Date()
       });
 
       reviewForm.reset();
     });
 
-    // Realtime reviews tonen
     onSnapshot(collection(db, "reviews"), (snapshot) => {
       reviewList.innerHTML = "";
       overlayReviews.innerHTML = "";
       snapshot.forEach(docSnap => {
         const data = docSnap.data();
         const html = `
-          <div class="review">
-            <p><strong>${data.name}</strong></p>
+          <div class="card">
+            <h4>${data.name}</h4>
             <p>${data.message}</p>
-            <p class="reactions"><em>Reacties:</em> ${data.reactions?.map(r => r.text + " " + (r.emoji || "")).join(", ") || "Geen"}</p>
-            <button onclick="addReaction('${docSnap.id}')">➕ Reactie</button>
           </div>
         `;
         reviewList.innerHTML += html;
@@ -59,53 +56,42 @@
       });
     });
 
-    // Reactie toevoegen
-    window.addReaction = async (id) => {
-      const text = prompt("Typ je reactie:");
-      const emoji = prompt("Emoji (optioneel):");
-      if (!text) return;
-      const ref = doc(db, "reviews", id);
-      await updateDoc(ref, {
-        reactions: arrayUnion({ text, emoji })
-      });
-    };
-
-    // Ranks opslaan en ophalen
+    // Ranks opslaan
     const rankForm = document.getElementById("rankForm");
-    const rankDisplay = document.getElementById("rankDisplay");
-    const overlayRank = document.getElementById("overlayRank");
-    const rankDocRef = doc(db, "settings", "rankInfo");
+    const rankList = document.getElementById("rankList");
+    const overlayRanks = document.getElementById("overlayRanks");
 
     rankForm.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const rank = e.target.rank.value;
-      const duration = e.target.duration.value;
+      const name = e.target.name.value;
+      const role = e.target.role.value;
+      const pfp = e.target.pfp.value;
 
-      await setDoc(rankDocRef, { rank, duration });
-      e.target.reset();
+      await addDoc(collection(db, "ranks"), {
+        name, role, pfp
+      });
+
+      rankForm.reset();
     });
 
-    async function loadRank() {
-      const snap = await getDoc(rankDocRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        rankDisplay.innerHTML = `<p><strong>Rank:</strong> ${data.rank}</p><p><strong>Duur:</strong> ${data.duration}</p>`;
-        overlayRank.innerHTML = rankDisplay.innerHTML;
-      } else {
-        rankDisplay.innerHTML = "Nog geen rank ingevoerd.";
-        overlayRank.innerHTML = rankDisplay.innerHTML;
-      }
-    }
-    loadRank();
-    onSnapshot(rankDocRef, (snap) => {
-      if (snap.exists()) {
-        const data = snap.data();
-        rankDisplay.innerHTML = `<p><strong>Rank:</strong> ${data.rank}</p><p><strong>Duur:</strong> ${data.duration}</p>`;
-        overlayRank.innerHTML = rankDisplay.innerHTML;
-      }
+    onSnapshot(collection(db, "ranks"), (snapshot) => {
+      rankList.innerHTML = "";
+      overlayRanks.innerHTML = "";
+      snapshot.forEach(docSnap => {
+        const data = docSnap.data();
+        const html = `
+          <div class="card rank">
+            <img src="${data.pfp}" alt="pfp">
+            <h4>${data.name}</h4>
+            <p>${data.role}</p>
+          </div>
+        `;
+        rankList.innerHTML += html;
+        overlayRanks.innerHTML += html;
+      });
     });
 
-    // Ctrl + \ overlay toggle
+    // Overlay
     const overlay = document.getElementById("overlay");
     const closeBtn = document.getElementById("closeOverlay");
     document.addEventListener("keydown", (e) => {
@@ -118,60 +104,80 @@
 
   <style>
     body {
-      margin: 0; font-family: Arial, sans-serif;
-      background: url('logo.png') no-repeat center top fixed, linear-gradient(to bottom, #66a6ff, #89f7fe);
-      background-size: cover;
-      color: #222;
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
+      color: #333;
     }
     header {
-      display: flex; align-items: center;
-      background: rgba(255,255,255,0.9);
-      padding: 10px 20px; box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+      display: flex; align-items: center; justify-content: center;
+      padding: 20px;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    header img { height: 50px; margin-right: 15px; }
-    header h1 { font-size: 24px; color: #004aad; }
+    header img { height: 60px; margin-right: 15px; }
+    header h1 { font-size: 28px; color: #004aad; }
+
     nav {
-      background: rgba(255,255,255,0.8);
-      padding: 10px; display: flex; gap: 15px;
+      display: flex; justify-content: center;
+      background: #004aad; padding: 10px;
     }
     nav button {
-      background: #004aad; color: white; border: none;
-      padding: 8px 15px; border-radius: 8px; cursor: pointer;
+      background: transparent; border: none;
+      color: white; font-size: 16px; margin: 0 15px;
+      cursor: pointer; font-weight: bold;
     }
-    nav button:hover { background: #003380; }
+    nav button:hover { text-decoration: underline; }
+
     section { display: none; padding: 20px; }
     section.active { display: block; }
+
     form {
-      margin-bottom: 20px; background: rgba(255,255,255,0.9);
-      padding: 15px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+      margin-bottom: 20px; background: white; padding: 15px;
+      border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
     input, textarea, button {
       width: 100%; margin: 5px 0; padding: 10px;
       border-radius: 8px; border: 1px solid #ccc;
     }
-    .review {
-      background: rgba(255,255,255,0.9); padding: 15px; margin: 10px 0;
-      border-radius: 10px; box-shadow: 0 1px 5px rgba(0,0,0,0.2);
+    button {
+      background: #004aad; color: white; border: none;
+      cursor: pointer; font-weight: bold;
     }
+    button:hover { background: #003380; }
+
+    .card {
+      background: white; padding: 15px; margin: 10px 0;
+      border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    .rank img {
+      width: 80px; height: 80px; border-radius: 50%;
+      object-fit: cover; margin-bottom: 10px;
+    }
+    .rank {
+      text-align: center;
+    }
+
     #overlay {
       display: none; position: fixed; top:0; left:0; width:100%; height:100%;
       background: rgba(0,0,50,0.9); justify-content: center; align-items: center;
       z-index: 1000; color: white;
     }
     #overlay-content {
-      background: #222; padding: 20px; border-radius: 12px;
+      background: #111; padding: 20px; border-radius: 12px;
       width: 80%; max-height: 80%; overflow-y: auto;
     }
     #closeOverlay {
-      background: red; color: white; border: none; padding: 8px 12px;
-      margin-bottom: 10px; border-radius: 6px; cursor: pointer;
+      background: red; border: none; padding: 8px 12px;
+      color: white; border-radius: 6px; cursor: pointer;
+      margin-bottom: 10px;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Server Logo">
-    <h1>Today Roleplay - Pixlguy</h1>
+    <img src="logo.png" alt="Logo">
+    <h1>Today Roleplay</h1>
   </header>
 
   <nav>
@@ -182,7 +188,7 @@
 
   <section id="home" class="active">
     <h2>Welkom bij Today Roleplay</h2>
-    <p>Welkom op de officiële info en review website! Laat hier je ervaring achter of bekijk de ranks.</p>
+    <p>Een plek om ervaringen te delen en onze ranks te bekijken.</p>
   </section>
 
   <section id="reviews">
@@ -192,27 +198,27 @@
       <textarea name="message" placeholder="Jouw review..." required></textarea>
       <button type="submit">Verstuur</button>
     </form>
-    <h3>Recente Reviews</h3>
     <div id="reviewList"></div>
   </section>
 
   <section id="ranks">
-    <h2>Mijn Rank</h2>
+    <h2>Voeg een Rank toe</h2>
     <form id="rankForm">
-      <input type="text" name="rank" placeholder="Rank (bv. Staff)" required>
-      <input type="text" name="duration" placeholder="Hoelang (bv. 3 maanden)" required>
+      <input type="text" name="name" placeholder="Naam" required>
+      <input type="text" name="role" placeholder="Rank (bv. Staff)" required>
+      <input type="url" name="pfp" placeholder="Profielfoto URL" required>
       <button type="submit">Opslaan</button>
     </form>
-    <div id="rankDisplay"></div>
+    <div id="rankList" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:20px;"></div>
   </section>
 
-  <!-- Overlay -->
   <div id="overlay">
     <div id="overlay-content">
       <button id="closeOverlay">Sluiten</button>
       <h2>📊 Overzicht</h2>
-      <div id="overlayRank"></div>
-      <h3>💬 Alle Reviews</h3>
+      <h3>🏆 Ranks</h3>
+      <div id="overlayRanks" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:20px;"></div>
+      <h3>💬 Reviews</h3>
       <div id="overlayReviews"></div>
     </div>
   </div>
