@@ -1,15 +1,272 @@
-```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Review Systeem - Pixlguy</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, arrayUnion } 
-      from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+  <meta charset="utf-8" />
+  <title>Pixlguy - Server Dashboard (Reviews & Ranks)</title>
 
-    // Firebase config van jou
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+  <style>
+    /* ---------- Basis + Theme ---------- */
+    :root{
+      --blue-1:#66a6ff;
+      --blue-2:#89f7fe;
+      --navy:#0b3861;
+      --card-bg: rgba(255,255,255,0.9);
+      --accent:#0b5bd6;
+      --glass: rgba(255,255,255,0.12);
+    }
+    html,body{height:100%; margin:0; font-family:Inter, system-ui, Arial; color:#07203a;}
+    body{
+      background: linear-gradient(180deg,var(--blue-1),var(--blue-2));
+      background-attachment: fixed;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      display:flex; min-height:100vh;
+    }
+
+    /* ---------- Sidebar ---------- */
+    .sidebar{
+      width:220px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.85), rgba(255,255,255,0.78));
+      box-shadow: 2px 6px 20px rgba(2,18,39,0.12);
+      padding:18px;
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      align-items:flex-start;
+    }
+    .logo{
+      display:flex; align-items:center; gap:12px;
+      width:100%;
+    }
+    .logo img{ width:56px; height:56px; object-fit:cover; border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,0.15);}
+    .logo .title{ font-size:18px; font-weight:700; color:var(--navy); line-height:1;}
+    .logo .subtitle{ font-size:12px; color:#12406f; opacity:0.9; margin-top:2px; }
+
+    .menu{
+      margin-top:8px; width:100%;
+      display:flex; flex-direction:column; gap:6px;
+    }
+    .menu button{
+      width:100%; text-align:left; padding:10px; border-radius:8px; background:transparent; border:none; font-weight:600; cursor:pointer;
+      color:var(--navy);
+    }
+    .menu button.active{ background:linear-gradient(90deg, rgba(11,91,214,0.12), rgba(11,91,214,0.06)); box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); }
+
+    /* ---------- Main content ---------- */
+    .main{
+      flex:1; padding:28px; overflow:auto;
+    }
+    .container{
+      max-width:1100px; margin:0 auto;
+    }
+    .card{
+      background:var(--card-bg); border-radius:12px; padding:16px; box-shadow: 0 6px 18px rgba(2,18,39,0.08);
+    }
+    h2{ margin:0 0 12px 0; color:var(--navy); }
+
+    /* Form inputs */
+    input[type="text"], textarea{
+      width:100%; padding:10px; border-radius:8px; border:1px solid rgba(2,18,39,0.08); resize:vertical;
+      font-size:14px; box-sizing:border-box;
+    }
+    textarea{ min-height:100px; }
+
+    .row{ display:flex; gap:12px; align-items:center; }
+    .row .col{ flex:1; }
+
+    .btn{
+      background:var(--accent); color:white; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:700;
+    }
+    .btn.ghost{ background:transparent; color:var(--navy); border:1px solid rgba(2,18,39,0.06); }
+
+    /* Reviews list */
+    .reviews{ display:flex; flex-direction:column; gap:12px; margin-top:12px; }
+    .review{
+      background: linear-gradient(180deg, rgba(255,255,255,0.98), rgba(255,255,255,0.92));
+      padding:12px; border-radius:10px; box-shadow:0 2px 8px rgba(2,18,39,0.05);
+      display:flex; justify-content:space-between; gap:12px;
+    }
+    .review .left{ flex:1; }
+    .rev-meta{ font-size:12px; color:#1160a0; font-weight:700; margin-bottom:6px; }
+    .rev-text{ color:#073048; margin-bottom:8px; white-space:pre-wrap; }
+
+    .rev-actions{ display:flex; gap:8px; align-items:center; }
+
+    /* small reaction chips */
+    .chip{ padding:6px 8px; border-radius:999px; background:var(--glass); border:1px solid rgba(255,255,255,0.06); font-size:13px; display:inline-flex; gap:6px; align-items:center; }
+
+    /* Overlay - fullscreen quick console */
+    #overlay{
+      position:fixed; inset:0; background:linear-gradient(180deg, rgba(3,19,57,0.86), rgba(3,19,57,0.92));
+      color:white; display:none; z-index:2000; justify-content:center; align-items:center; padding:20px;
+    }
+    #overlay .overlay-box{
+      width:95%; max-width:1100px; max-height:90%; overflow:auto; background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02)); border-radius:12px; padding:18px;
+    }
+    #overlay .top{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:12px; }
+    #overlay .tabs{ display:flex; gap:8px; }
+    #overlay .tab{ padding:8px 10px; border-radius:8px; cursor:pointer; background:transparent; color:white; border:1px solid rgba(255,255,255,0.06); }
+    #overlay .tab.active{ background:white; color:var(--navy); font-weight:700; }
+
+    /* responsive */
+    @media (max-width:820px){
+      .sidebar{ display:none; }
+      body{ padding:12px; }
+      .main{ padding:12px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" aria-label="Navigatie">
+    <div class="logo">
+      <img src="logo.png" alt="Server logo - Pixlguy (plaats logo.png hier)">
+      <div>
+        <div class="title">Pixlguy</div>
+        <div class="subtitle">Today Roleplay — Staff</div>
+      </div>
+    </div>
+
+    <nav class="menu" role="navigation">
+      <button id="menu-reviews" class="active">📢 Reviews</button>
+      <button id="menu-ranks">🏆 Ranks</button>
+      <button id="menu-reactions">💬 Reacties</button>
+      <button id="open-overlay" class="ghost" title="Open overlay (Ctrl + \\)">⌨️ Quick console (Ctrl + \)</button>
+    </nav>
+
+    <div style="margin-top:auto; font-size:12px; color:#073048; opacity:0.9;">
+      Opslaan in Firebase • Realtime
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="container">
+      <!-- Reviews view -->
+      <section id="view-reviews" class="card" style="margin-bottom:16px;">
+        <h2>Laat een review achter</h2>
+        <form id="reviewForm">
+          <div class="row">
+            <div class="col">
+              <input type="text" name="name" placeholder="Jouw naam" required />
+            </div>
+          </div>
+          <div style="margin-top:10px;">
+            <textarea name="message" placeholder="Jouw review - vertel je ervaring..." required></textarea>
+          </div>
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn" type="submit">Verstuur Review</button>
+            <button type="button" id="clear-review" class="btn ghost">Reset</button>
+          </div>
+        </form>
+
+        <h2 style="margin-top:18px;">Laatste reviews</h2>
+        <div id="reviews" class="reviews" aria-live="polite"></div>
+      </section>
+
+      <!-- Ranks view -->
+      <section id="view-ranks" class="card" style="display:none; margin-bottom:16px;">
+        <h2>Ranks (toevoegen / beheren)</h2>
+        <p style="margin-top:0.25rem; color:#0b3b61;">Hier kun jij (Pixlguy / staff) je huidige rank en hoe lang toevoegen of updaten.</p>
+
+        <form id="rankForm">
+          <div class="row">
+            <div class="col">
+              <input type="text" name="rankName" placeholder="Rank (bv. Moderator / Admin)" required />
+            </div>
+            <div style="width:180px;">
+              <input type="text" name="duration" placeholder="Hoelang (bv. 2 maanden)" required />
+            </div>
+          </div>
+
+          <div style="margin-top:10px; display:flex; gap:8px;">
+            <button class="btn" type="submit">Opslaan Rank</button>
+            <button id="btn-new-rank" type="button" class="btn ghost">Nieuw</button>
+          </div>
+        </form>
+
+        <h3 style="margin-top:14px;">Recente ranks</h3>
+        <div id="ranksList" style="margin-top:10px; display:flex; flex-direction:column; gap:10px;"></div>
+      </section>
+
+      <!-- Reactions view -->
+      <section id="view-reactions" class="card" style="display:none;">
+        <h2>Reacties op reviews</h2>
+        <p style="margin-top:0.25rem">Klik op 'React' bij een review om een tekst + emoji toe te voegen.</p>
+        <div id="reactionsPanel" style="margin-top:12px;"></div>
+      </section>
+    </div>
+  </main>
+
+  <!-- Overlay (Ctrl + \) -->
+  <div id="overlay" role="dialog" aria-modal="true">
+    <div class="overlay-box">
+      <div class="top">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <img src="logo.png" alt="logo" style="width:46px; height:46px; border-radius:8px;">
+          <div>
+            <div style="font-weight:800; color:white; font-size:18px;">Pixlguy Quick Console</div>
+            <div style="font-size:12px; color:rgba(255,255,255,0.8)">Gebruik ← → tabs of klik. Sluit met Esc of Ctrl + \</div>
+          </div>
+        </div>
+
+        <div style="display:flex; gap:8px; align-items:center;">
+          <div class="tabs">
+            <div class="tab active" data-tab="overlay-reviews">Reviews</div>
+            <div class="tab" data-tab="overlay-ranks">Ranks</div>
+            <div class="tab" data-tab="overlay-reactions">Reacties</div>
+          </div>
+          <div style="width:10px;"></div>
+          <button id="close-overlay" class="btn ghost">Sluiten</button>
+        </div>
+      </div>
+
+      <div id="overlay-content">
+        <!-- Reviews quick -->
+        <div id="overlay-reviews">
+          <h3>Recente reviews</h3>
+          <div id="overlayReviewsList" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;"></div>
+        </div>
+
+        <!-- Ranks quick -->
+        <div id="overlay-ranks" style="display:none;">
+          <h3>Ranks (snel beheren)</h3>
+          <div id="overlayRanksList" style="margin-top:8px; display:flex; flex-direction:column; gap:10px;"></div>
+          <div style="margin-top:12px;">
+            <form id="overlayRankForm">
+              <div style="display:flex; gap:8px;">
+                <input type="text" name="rankNameO" placeholder="Rank" required />
+                <input type="text" name="durationO" placeholder="Hoelang" required />
+                <button class="btn" type="submit">Toevoegen</button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Reactions quick -->
+        <div id="overlay-reactions" style="display:none;">
+          <h3>Reacties toevoegen</h3>
+          <div id="overlayReactionsArea" style="margin-top:8px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase + App logic -->
+  <script type="module">
+    /* ============================
+       Firebase imports
+       ============================ */
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import {
+      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, arrayUnion,
+      serverTimestamp, query, orderBy, getDoc, deleteDoc
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+
+    // ---------- jouw Firebase-config (al door jou geleverd) ----------
     const firebaseConfig = {
       apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
       authDomain: "today-6828b.firebaseapp.com",
@@ -22,179 +279,271 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    const reviewForm = document.getElementById("reviewForm");
-    const reviewList = document.getElementById("reviewList");
-    const overlayList = document.getElementById("overlayList");
-    const overlay = document.getElementById("overlay");
-    const closeBtn = document.getElementById("closeOverlay");
+    /* ============================
+       Elementen
+       ============================ */
+    const menuReviews = document.getElementById('menu-reviews');
+    const menuRanks = document.getElementById('menu-ranks');
+    const menuReacts = document.getElementById('menu-reactions');
+    const openOverlayBtn = document.getElementById('open-overlay');
 
-    // Nieuwe review toevoegen
-    reviewForm.addEventListener("submit", async (e) => {
+    const viewReviews = document.getElementById('view-reviews');
+    const viewRanks = document.getElementById('view-ranks');
+    const viewReactions = document.getElementById('view-reactions');
+
+    const reviewForm = document.getElementById('reviewForm');
+    const reviewsEl = document.getElementById('reviews');
+
+    const rankForm = document.getElementById('rankForm');
+    const ranksList = document.getElementById('ranksList');
+
+    const reactionsPanel = document.getElementById('reactionsPanel');
+
+    const overlay = document.getElementById('overlay');
+    const closeOverlay = document.getElementById('close-overlay');
+
+    const overlayReviewsList = document.getElementById('overlayReviewsList');
+    const overlayRanksList = document.getElementById('overlayRanksList');
+    const overlayReactionsArea = document.getElementById('overlayReactionsArea');
+
+    /* ============================
+       Hulp: wissel view
+       ============================ */
+    function setActiveMenu(which){
+      menuReviews.classList.remove('active');
+      menuRanks.classList.remove('active');
+      menuReacts.classList.remove('active');
+      viewReviews.style.display = 'none';
+      viewRanks.style.display = 'none';
+      viewReactions.style.display = 'none';
+
+      if(which === 'reviews'){ menuReviews.classList.add('active'); viewReviews.style.display = 'block'; }
+      if(which === 'ranks'){ menuRanks.classList.add('active'); viewRanks.style.display = 'block'; }
+      if(which === 'reactions'){ menuReacts.classList.add('active'); viewReactions.style.display = 'block'; }
+    }
+
+    menuReviews.addEventListener('click', ()=> setActiveMenu('reviews'));
+    menuRanks.addEventListener('click', ()=> setActiveMenu('ranks'));
+    menuReacts.addEventListener('click', ()=> setActiveMenu('reactions'));
+    openOverlayBtn.addEventListener('click', ()=> toggleOverlay());
+
+    /* ============================
+       CRUD: Reviews collection
+       ============================ */
+    const reviewsCol = collection(db, 'reviews');
+    const ranksCol = collection(db, 'ranks'); // aparte collectie voor ranks
+
+    // Post review
+    reviewForm.addEventListener('submit', async (e)=>{
       e.preventDefault();
-      const name = e.target.name.value;
-      const message = e.target.message.value;
-
-      await addDoc(collection(db, "reviews"), {
-        name, message,
-        createdAt: new Date(),
-        reactions: []
+      const name = reviewForm.name.value.trim();
+      const message = reviewForm.message.value.trim();
+      if(!name || !message) return alert('Vul naam en review in.');
+      await addDoc(reviewsCol, {
+        name, message, createdAt: serverTimestamp(), reactions: []
       });
-
       reviewForm.reset();
     });
 
-    // Realtime reviews
-    onSnapshot(collection(db, "reviews"), (snapshot) => {
-      reviewList.innerHTML = "";
-      overlayList.innerHTML = "";
+    // Realtime: lijst reviews (gesorteerd op datum desc)
+    const reviewsQuery = query(reviewsCol, orderBy('createdAt','desc'));
+    onSnapshot(reviewsQuery, snapshot => {
+      reviewsEl.innerHTML = '';
+      overlayReviewsList.innerHTML = '';
+      overlayReactionsArea.innerHTML = '';
       snapshot.forEach(docSnap => {
+        const id = docSnap.id;
         const data = docSnap.data();
-        const reviewHTML = `
-          <div class="review">
-            <p><strong>${data.name}</strong></p>
-            <p>${data.message}</p>
-            <p class="reactions"><em>Reacties:</em> ${data.reactions?.map(r => r.text + " " + (r.emoji || "")).join(", ") || "Geen"}</p>
-            <button onclick="addReaction('${docSnap.id}')">➕ Reactie</button>
+
+        // Tijd/placeholder voor createdAt
+        const created = data.createdAt && data.createdAt.seconds ? new Date(data.createdAt.seconds*1000).toLocaleString() : '';
+
+        // Review card in main view
+        const rv = document.createElement('div');
+        rv.className = 'review';
+        rv.innerHTML = `
+          <div class="left">
+            <div class="rev-meta">${escapeHtml(data.name)} ${created ? ' • ' + created : ''}</div>
+            <div class="rev-text">${escapeHtml(data.message)}</div>
+            <div class="rev-reactions">${(data.reactions && data.reactions.length) ? data.reactions.map(r => `<span class="chip">${escapeHtml(r.text)} ${escapeHtml(r.emoji || '')}</span>`).join(' ') : '<span style="color:#5b9bd8">Geen reacties</span>'}</div>
+          </div>
+          <div class="rev-actions">
+            <button class="btn ghost" data-id="${id}" onclick="window.openReactionInput('${id}')">React</button>
+            <button class="btn" data-id="${id}" onclick="window.quickEmoji('${id}','👍')">👍</button>
+            <button class="btn" data-id="${id}" onclick="window.quickEmoji('${id}','❤️')">❤️</button>
           </div>
         `;
-        reviewList.innerHTML += reviewHTML;
-        overlayList.innerHTML += reviewHTML;
+        reviewsEl.appendChild(rv);
+
+        // Overlay reviews list (compacter)
+        const rv2 = document.createElement('div');
+        rv2.style.padding = '10px';
+        rv2.style.borderRadius = '8px';
+        rv2.style.background = 'rgba(255,255,255,0.03)';
+        rv2.innerHTML = `<strong>${escapeHtml(data.name)}</strong> • ${escapeHtml(data.message.substring(0,120))}${data.message.length>120? '…':''}
+                         <div style="margin-top:8px"><button class="btn ghost" onclick="window.openReactionInput('${id}')">React</button></div>`;
+        overlayReviewsList.appendChild(rv2);
+
+        // Overlay reactions area: create panel to add reactions per review
+        const reactBlock = document.createElement('div');
+        reactBlock.style.padding='8px';
+        reactBlock.style.borderBottom='1px dashed rgba(255,255,255,0.03)';
+        reactBlock.innerHTML = `<div style="font-weight:700">${escapeHtml(data.name)}</div>
+                                <div style="margin:6px 0">${escapeHtml(data.message)}</div>
+                                <div><small style="opacity:0.8">Reacties: ${(data.reactions && data.reactions.length) ? data.reactions.map(r=>escapeHtml(r.text)+' '+escapeHtml(r.emoji||'')).join(', ') : 'Geen'}</small></div>
+                                <div style="margin-top:8px;">
+                                  <button class="btn ghost" onclick="window.openReactionInput('${id}')">Toevoegen</button>
+                                  <button class="btn" onclick="window.quickEmoji('${id}','🔥')">🔥</button>
+                                  <button class="btn" onclick="window.quickEmoji('${id}','😄')">😄</button>
+                                </div>`;
+        overlayReactionsArea.appendChild(reactBlock);
       });
     });
 
-    // Reactie toevoegen
-    window.addReaction = async (id) => {
-      const text = prompt("Typ je reactie:");
-      const emoji = prompt("Voeg een emoji toe (optioneel):");
-      if (!text) return;
-      const reviewRef = doc(db, "reviews", id);
-      await updateDoc(reviewRef, {
-        reactions: arrayUnion({ text, emoji })
+    /* ============================
+       Ranks: toevoegen & realtime
+       ============================ */
+    rankForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const rankName = rankForm.rankName.value.trim();
+      const duration = rankForm.duration.value.trim();
+      if(!rankName || !duration) return alert('Vul rank en duur in.');
+      await addDoc(ranksCol, { rankName, duration, createdAt: serverTimestamp() });
+      rankForm.reset();
+    });
+
+    // overlay rank form
+    const overlayRankForm = document.getElementById('overlayRankForm');
+    overlayRankForm.addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const rankName = overlayRankForm.rankNameO.value.trim();
+      const duration = overlayRankForm.durationO.value.trim();
+      if(!rankName || !duration) return alert('Vul rank en duur in.');
+      await addDoc(ranksCol, { rankName, duration, createdAt: serverTimestamp() });
+      overlayRankForm.reset();
+    });
+
+    // realtime ranks
+    const ranksQuery = query(ranksCol, orderBy('createdAt','desc'));
+    onSnapshot(ranksQuery, snapshot => {
+      ranksList.innerHTML = '';
+      overlayRanksList.innerHTML = '';
+      snapshot.forEach(docSnap=>{
+        const id = docSnap.id;
+        const data = docSnap.data();
+        const created = data.createdAt && data.createdAt.seconds ? new Date(data.createdAt.seconds*1000).toLocaleString() : '';
+
+        const el = document.createElement('div');
+        el.className = 'card';
+        el.style.padding='10px';
+        el.style.display='flex';
+        el.style.justifyContent='space-between';
+        el.innerHTML = `<div>
+                          <div style="font-weight:800">${escapeHtml(data.rankName)}</div>
+                          <div style="font-size:13px; color:#0b4f7a">${escapeHtml(data.duration)} • ${created}</div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                          <button class="btn ghost" onclick="window.editRank('${id}')">Bewerk</button>
+                          <button class="btn" onclick="window.deleteRank('${id}')">Verwijder</button>
+                        </div>`;
+        ranksList.appendChild(el);
+
+        const el2 = document.createElement('div');
+        el2.style.padding='8px';
+        el2.style.borderRadius='8px';
+        el2.style.background='rgba(255,255,255,0.02)';
+        el2.innerHTML = `<strong>${escapeHtml(data.rankName)}</strong> — ${escapeHtml(data.duration)}`;
+        overlayRanksList.appendChild(el2);
       });
+    });
+
+    // delete / edit rank helpers
+    window.deleteRank = async (id) => {
+      if(!confirm('Verwijder deze rank?')) return;
+      await deleteDoc(doc(db, 'ranks', id));
     };
 
-    // Overlay toggle met Ctrl + \
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "\\") {
-        overlay.style.display = overlay.style.display === "flex" ? "none" : "flex";
+    window.editRank = async (id) => {
+      const docRef = doc(db, 'ranks', id);
+      const r = prompt('Nieuwe tekst (format: Rank | Duur)\nBijv: Moderator | 2 maanden');
+      if(!r) return;
+      const parts = r.split('|').map(s=>s.trim());
+      if(parts.length < 2) return alert('Gebruik format: Rank | Duur');
+      await updateDoc(docRef, { rankName: parts[0], duration: parts[1] });
+    };
+
+    /* ============================
+       Reactions: toevoegen aan review
+       ============================ */
+    window.openReactionInput = async (reviewId) => {
+      const text = prompt('Typ je reactie (kort):');
+      if(!text) return;
+      const emoji = prompt('Voeg emoji toe (optioneel):');
+      const reviewRef = doc(db, 'reviews', reviewId);
+      await updateDoc(reviewRef, { reactions: arrayUnion({ text, emoji: emoji || '' }) });
+    };
+
+    window.quickEmoji = async (reviewId, emoji) => {
+      const reviewRef = doc(db, 'reviews', reviewId);
+      await updateDoc(reviewRef, { reactions: arrayUnion({ text: '', emoji }) });
+    };
+
+    /* ============================
+       Overlay: open/close + tabs + shortcuts
+       ============================ */
+    function toggleOverlay(){
+      overlay.style.display = overlay.style.display === 'flex' ? 'none' : 'flex';
+    }
+    document.getElementById('open-overlay').addEventListener('click', toggleOverlay);
+    closeOverlay.addEventListener('click', ()=> overlay.style.display='none');
+
+    // overlay tab switching
+    const overlayTabs = document.querySelectorAll('#overlay .tab');
+    overlayTabs.forEach(t => t.addEventListener('click', (ev)=>{
+      overlayTabs.forEach(x=>x.classList.remove('active'));
+      t.classList.add('active');
+      const target = t.getAttribute('data-tab');
+      document.querySelectorAll('#overlay-content > div').forEach(d => d.style.display = 'none');
+      document.getElementById(target).style.display = 'block';
+    }));
+
+    // Keyboard: Ctrl + \
+    document.addEventListener('keydown', (e)=>{
+      if(e.ctrlKey && e.key === '\\'){
+        e.preventDefault();
+        toggleOverlay();
+      }
+      // close with Esc
+      if(e.key === 'Escape'){
+        overlay.style.display = 'none';
       }
     });
-    closeBtn.addEventListener("click", () => {
-      overlay.style.display = "none";
-    });
+
+    /* ============================
+       Utility: sanitize text for HTML (simple)
+       ============================ */
+    function escapeHtml(str){
+      if(!str) return '';
+      return String(str)
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'",'&#039;');
+    }
+
+    /* ============================
+       Extra: Expose some helpers to window for inline onclicks
+       ============================ */
+    window.openReactionInput = window.openReactionInput;
+    window.quickEmoji = window.quickEmoji;
+    window.deleteRank = window.deleteRank;
+    window.editRank = window.editRank;
+
+    /* ============================
+       Ready: default view
+       ============================ */
+    setActiveMenu('reviews');
   </script>
-
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #66a6ff, #89f7fe);
-      background-attachment: fixed;
-      color: #222;
-    }
-    header {
-      display: flex;
-      align-items: center;
-      background: rgba(255,255,255,0.8);
-      padding: 10px 20px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    header img {
-      height: 50px;
-      margin-right: 15px;
-    }
-    header h1 {
-      font-size: 24px;
-      color: #004aad;
-      text-shadow: 1px 1px 2px white;
-    }
-    form {
-      margin: 20px;
-      padding: 15px;
-      background: rgba(255,255,255,0.9);
-      border-radius: 12px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-    input, textarea, button {
-      width: 100%;
-      margin: 5px 0;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #004aad;
-      color: white;
-      cursor: pointer;
-      border: none;
-    }
-    button:hover {
-      background: #003380;
-    }
-    .review {
-      background: rgba(255,255,255,0.85);
-      margin: 10px 20px;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 1px 5px rgba(0,0,0,0.2);
-    }
-    .reactions {
-      font-size: 0.9em;
-      color: #444;
-    }
-    /* Overlay */
-    #overlay {
-      display: none;
-      position: fixed;
-      top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,50,0.9);
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-      color: white;
-    }
-    #overlay-content {
-      background: #222;
-      padding: 20px;
-      border-radius: 12px;
-      width: 80%;
-      max-height: 80%;
-      overflow-y: auto;
-    }
-    #closeOverlay {
-      background: red;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      margin-bottom: 10px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-  </style>
-</head>
-<body>
-  <header>
-    <img src="logo.png" alt="Server Logo">
-    <h1>Pixlguy Reviews</h1>
-  </header>
-
-  <form id="reviewForm">
-    <input type="text" name="name" placeholder="Jouw naam" required>
-    <textarea name="message" placeholder="Jouw review..." required></textarea>
-    <button type="submit">Verstuur Review</button>
-  </form>
-
-  <h2 style="margin-left:20px;">Laatste Reviews</h2>
-  <div id="reviewList"></div>
-
-  <!-- Overlay -->
-  <div id="overlay">
-    <div id="overlay-content">
-      <button id="closeOverlay">Sluiten</button>
-      <h2>Alle Reviews</h2>
-      <div id="overlayList"></div>
-    </div>
-  </div>
 </body>
 </html>
-```
