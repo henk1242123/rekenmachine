@@ -1,234 +1,194 @@
-```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8">
-  <title>Today Roleplay - Pixlguy</title>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { 
-      getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, setDoc, getDoc 
-    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
-
-    // Firebase config
-    const firebaseConfig = {
-      apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
-      authDomain: "today-6828b.firebaseapp.com",
-      projectId: "today-6828b",
-      storageBucket: "today-6828b.firebasestorage.app",
-      messagingSenderId: "107632990693",
-      appId: "1:107632990693:web:e6aae5432e5d4ee655770c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    // Reviews opslaan
-    const reviewForm = document.getElementById("reviewForm");
-    const reviewList = document.getElementById("reviewList");
-    const overlayReviews = document.getElementById("overlayReviews");
-
-    reviewForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = e.target.name.value;
-      const message = e.target.message.value;
-
-      await addDoc(collection(db, "reviews"), {
-        name, message, createdAt: new Date()
-      });
-
-      reviewForm.reset();
-    });
-
-    onSnapshot(collection(db, "reviews"), (snapshot) => {
-      reviewList.innerHTML = "";
-      overlayReviews.innerHTML = "";
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const html = `
-          <div class="card">
-            <h4>${data.name}</h4>
-            <p>${data.message}</p>
-          </div>
-        `;
-        reviewList.innerHTML += html;
-        overlayReviews.innerHTML += html;
-      });
-    });
-
-    // Ranks opslaan
-    const rankForm = document.getElementById("rankForm");
-    const rankList = document.getElementById("rankList");
-    const overlayRanks = document.getElementById("overlayRanks");
-
-    rankForm.addEventListener("submit", async (e) => {
-      e.preventDefault();
-      const name = e.target.name.value;
-      const role = e.target.role.value;
-      const pfp = e.target.pfp.value;
-
-      await addDoc(collection(db, "ranks"), {
-        name, role, pfp
-      });
-
-      rankForm.reset();
-    });
-
-    onSnapshot(collection(db, "ranks"), (snapshot) => {
-      rankList.innerHTML = "";
-      overlayRanks.innerHTML = "";
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const html = `
-          <div class="card rank">
-            <img src="${data.pfp}" alt="pfp">
-            <h4>${data.name}</h4>
-            <p>${data.role}</p>
-          </div>
-        `;
-        rankList.innerHTML += html;
-        overlayRanks.innerHTML += html;
-      });
-    });
-
-    // Overlay
-    const overlay = document.getElementById("overlay");
-    const closeBtn = document.getElementById("closeOverlay");
-    document.addEventListener("keydown", (e) => {
-      if (e.ctrlKey && e.key === "\\") {
-        overlay.style.display = overlay.style.display === "flex" ? "none" : "flex";
-      }
-    });
-    closeBtn.addEventListener("click", () => overlay.style.display = "none");
-  </script>
-
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Today Comeback</title>
   <style>
     body {
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: linear-gradient(to bottom, #a1c4fd, #c2e9fb);
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to bottom, #b3e5fc, #fff);
       color: #333;
-    }
-    header {
-      display: flex; align-items: center; justify-content: center;
-      padding: 20px;
-      background: white;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    header img { height: 60px; margin-right: 15px; }
-    header h1 { font-size: 28px; color: #004aad; }
-
-    nav {
-      display: flex; justify-content: center;
-      background: #004aad; padding: 10px;
-    }
-    nav button {
-      background: transparent; border: none;
-      color: white; font-size: 16px; margin: 0 15px;
-      cursor: pointer; font-weight: bold;
-    }
-    nav button:hover { text-decoration: underline; }
-
-    section { display: none; padding: 20px; }
-    section.active { display: block; }
-
-    form {
-      margin-bottom: 20px; background: white; padding: 15px;
-      border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    input, textarea, button {
-      width: 100%; margin: 5px 0; padding: 10px;
-      border-radius: 8px; border: 1px solid #ccc;
-    }
-    button {
-      background: #004aad; color: white; border: none;
-      cursor: pointer; font-weight: bold;
-    }
-    button:hover { background: #003380; }
-
-    .card {
-      background: white; padding: 15px; margin: 10px 0;
-      border-radius: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    }
-    .rank img {
-      width: 80px; height: 80px; border-radius: 50%;
-      object-fit: cover; margin-bottom: 10px;
-    }
-    .rank {
       text-align: center;
     }
-
-    #overlay {
-      display: none; position: fixed; top:0; left:0; width:100%; height:100%;
-      background: rgba(0,0,50,0.9); justify-content: center; align-items: center;
-      z-index: 1000; color: white;
+    header {
+      padding: 20px;
     }
-    #overlay-content {
-      background: #111; padding: 20px; border-radius: 12px;
-      width: 80%; max-height: 80%; overflow-y: auto;
+    nav {
+      margin: 20px;
     }
-    #closeOverlay {
-      background: red; border: none; padding: 8px 12px;
-      color: white; border-radius: 6px; cursor: pointer;
-      margin-bottom: 10px;
+    nav a {
+      margin: 0 15px;
+      font-weight: bold;
+      color: #333;
+      text-decoration: none;
+    }
+    nav a:hover {
+      text-decoration: underline;
+    }
+    section {
+      padding: 40px 20px;
+    }
+    .review-form {
+      max-width: 400px;
+      margin: auto;
+      text-align: left;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    input, textarea, button {
+      width: 100%;
+      margin: 8px 0;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: #0288d1;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    .review {
+      background: white;
+      padding: 15px;
+      margin: 15px auto;
+      border-radius: 12px;
+      max-width: 500px;
+      text-align: left;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    .review strong {
+      display: block;
+      font-size: 1.1em;
+      margin-bottom: 5px;
+    }
+    .stars {
+      color: gold;
+    }
+    .discord-btn {
+      background: #5865f2;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: bold;
+      display: inline-block;
     }
   </style>
 </head>
 <body>
   <header>
-    <img src="logo.png" alt="Logo">
-    <h1>Today Roleplay</h1>
+    <img src="logo.png" alt="Server Logo" width="120" />
+    <h1>Today Comeback</h1>
+    <p>FiveM Roleplay Server</p>
   </header>
 
   <nav>
-    <button onclick="showSection('home')">🏠 Home</button>
-    <button onclick="showSection('reviews')">💬 Reviews</button>
-    <button onclick="showSection('ranks')">🏆 Ranks</button>
+    <a href="#about">Over Mij</a>
+    <a href="#reviews">Reviews</a>
+    <a href="#discord">Discord</a>
   </nav>
 
-  <section id="home" class="active">
-    <h2>Welkom bij Today Roleplay</h2>
-    <p>Een plek om ervaringen te delen en onze ranks te bekijken.</p>
+  <section id="about">
+    <h2>Over Mij</h2>
+    <p><strong>Staff Rank:</strong> Admin</p>
+    <p><strong>Job1:</strong> Kmar</p>
+    <p><strong>Job2:</strong> DSI</p>
   </section>
 
   <section id="reviews">
-    <h2>Laat een Review achter</h2>
-    <form id="reviewForm">
-      <input type="text" name="name" placeholder="Jouw naam" required>
-      <textarea name="message" placeholder="Jouw review..." required></textarea>
-      <button type="submit">Verstuur</button>
-    </form>
-    <div id="reviewList"></div>
-  </section>
-
-  <section id="ranks">
-    <h2>Voeg een Rank toe</h2>
-    <form id="rankForm">
-      <input type="text" name="name" placeholder="Naam" required>
-      <input type="text" name="role" placeholder="Rank (bv. Staff)" required>
-      <input type="url" name="pfp" placeholder="Profielfoto URL" required>
-      <button type="submit">Opslaan</button>
-    </form>
-    <div id="rankList" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:20px;"></div>
-  </section>
-
-  <div id="overlay">
-    <div id="overlay-content">
-      <button id="closeOverlay">Sluiten</button>
-      <h2>📊 Overzicht</h2>
-      <h3>🏆 Ranks</h3>
-      <div id="overlayRanks" style="display:grid; grid-template-columns: repeat(auto-fit,minmax(200px,1fr)); gap:20px;"></div>
-      <h3>💬 Reviews</h3>
-      <div id="overlayReviews"></div>
+    <h2>Reviews</h2>
+    <div class="review-form">
+      <input type="text" id="name" placeholder="Jouw naam" />
+      <textarea id="text" placeholder="Schrijf je review..."></textarea>
+      <label>Sterren:</label>
+      <select id="stars">
+        <option value="1">⭐</option>
+        <option value="2">⭐⭐</option>
+        <option value="3">⭐⭐⭐</option>
+        <option value="4">⭐⭐⭐⭐</option>
+        <option value="5">⭐⭐⭐⭐⭐</option>
+      </select>
+      <button onclick="submitReview()">Plaats Review</button>
     </div>
-  </div>
+    <div id="review-list"></div>
+  </section>
 
-  <script>
-    function showSection(id) {
-      document.querySelectorAll("section").forEach(sec => sec.classList.remove("active"));
-      document.getElementById(id).classList.add("active");
+  <section id="discord">
+    <h2>Join onze Discord</h2>
+    <a href="https://discord.gg/today" target="_blank" class="discord-btn">
+      🎮 Join Discord
+    </a>
+  </section>
+
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+
+    // 🔥 Vul je eigen Firebase config hier in
+    const firebaseConfig = {
+  apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
+  authDomain: "today-6828b.firebaseapp.com",
+  projectId: "today-6828b",
+  storageBucket: "today-6828b.firebasestorage.app",
+  messagingSenderId: "107632990693",
+  appId: "1:107632990693:web:e6aae5432e5d4ee655770c"
+};
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    const reviewList = document.getElementById("review-list");
+
+    async function loadReviews() {
+      reviewList.innerHTML = "";
+      const querySnapshot = await getDocs(collection(db, "reviews"));
+      querySnapshot.forEach((doc) => {
+        const r = doc.data();
+        reviewList.innerHTML += `
+          <div class="review">
+            <strong>${r.name}</strong>
+            <div class="stars">${"⭐".repeat(r.stars)}</div>
+            <p>${r.text}</p>
+          </div>
+        `;
+      });
     }
+
+    window.submitReview = async function () {
+      const name = document.getElementById("name").value;
+      const text = document.getElementById("text").value;
+      const stars = parseInt(document.getElementById("stars").value);
+
+      if (!name || !text) {
+        alert("Vul alle velden in!");
+        return;
+      }
+
+      // Voeg review toe
+      await addDoc(collection(db, "reviews"), { name, text, stars });
+
+      // Automatische reactie van Pixlguy
+      await addDoc(collection(db, "reviews"), {
+        name: "Pixlguy",
+        text: "Thx maat ❤️",
+        stars: 5,
+      });
+
+      document.getElementById("name").value = "";
+      document.getElementById("text").value = "";
+      document.getElementById("stars").value = "5";
+
+      loadReviews();
+    };
+
+    loadReviews();
   </script>
 </body>
 </html>
-```
