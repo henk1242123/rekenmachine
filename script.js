@@ -1,34 +1,40 @@
-// Parallax background effect
+// 🎨 Parallax achtergrond
 document.addEventListener("mousemove", (e) => {
   const x = (e.clientX / window.innerWidth - 0.5) * 20;
   const y = (e.clientY / window.innerHeight - 0.5) * 20;
-  document.getElementById("parallax-bg").style.transform = `translate(${x}px, ${y}px)`;
+  const bg = document.getElementById("parallax-bg");
+  if (bg) bg.style.transform = `translate(${x}px, ${y}px)`;
 });
 
-// Firebase
+// 🔥 Firebase import
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// 🔥 Vul hier je eigen Firebase config in
+// 🔑 Zet hier je eigen Firebase config
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
+  authDomain: "today-6828b.firebaseapp.com",
+  projectId: "today-6828b",
+  storageBucket: "today-6828b.firebasestorage.app",
+  messagingSenderId: "107632990693",
+  appId: "1:107632990693:web:e6aae5432e5d4ee655770c"
 };
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const reviewList = document.getElementById("review-list");
-if (reviewList) loadReviews();
 
-async function loadReviews() {
+// Reviews laden en tonen
+export async function loadReviews() {
+  if (!reviewList) return;
+  reviewList.innerHTML = "<p>Laden...</p>";
+
+  const q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
+  const snapshot = await getDocs(q);
+
   reviewList.innerHTML = "";
-  const querySnapshot = await getDocs(collection(db, "reviews"));
-  querySnapshot.forEach((doc) => {
+  snapshot.forEach((doc) => {
     const r = doc.data();
     reviewList.innerHTML += `
       <div class="review">
@@ -40,9 +46,10 @@ async function loadReviews() {
   });
 }
 
+// Review insturen
 window.submitReview = async function () {
-  const name = document.getElementById("name").value;
-  const text = document.getElementById("text").value;
+  const name = document.getElementById("name").value.trim();
+  const text = document.getElementById("text").value.trim();
   const stars = parseInt(document.getElementById("stars").value);
 
   if (!name || !text) {
@@ -50,14 +57,27 @@ window.submitReview = async function () {
     return;
   }
 
-  await addDoc(collection(db, "reviews"), { name, text, stars });
+  await addDoc(collection(db, "reviews"), {
+    name,
+    text,
+    stars,
+    timestamp: Date.now()
+  });
 
-  // Auto reply van Pixlguy
+  // Automatisch bericht van Pixlguy
   await addDoc(collection(db, "reviews"), {
     name: "Pixlguy",
     text: "Love G ❤️",
     stars: 5,
+    timestamp: Date.now()
   });
+
+  document.getElementById("name").value = "";
+  document.getElementById("text").value = "";
+  document.getElementById("stars").value = "5";
 
   loadReviews();
 };
+
+// Start reviews laden bij openen
+if (reviewList) loadReviews();
