@@ -1,4 +1,4 @@
-// 🎨 Parallax achtergrond
+// 🎨 Parallax achtergrond effect
 document.addEventListener("mousemove", (e) => {
   const x = (e.clientX / window.innerWidth - 0.5) * 20;
   const y = (e.clientY / window.innerHeight - 0.5) * 20;
@@ -6,29 +6,31 @@ document.addEventListener("mousemove", (e) => {
   if (bg) bg.style.transform = `translate(${x}px, ${y}px)`;
 });
 
-// 🔥 Firebase import
+// 🔥 Firebase imports
 import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, orderBy } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
 
-// 🔑 Zet hier je eigen Firebase config
+// 🔑 Jouw Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
-  authDomain: "today-6828b.firebaseapp.com",
-  projectId: "today-6828b",
-  storageBucket: "today-6828b.firebasestorage.app",
-  messagingSenderId: "107632990693",
-  appId: "1:107632990693:web:e6aae5432e5d4ee655770c"
+  apiKey: "AIzaSyAgbwBPhNQ_7LLzMv6v8y8DG9hK6kY2fOA",
+  authDomain: "todaywebsite.firebaseapp.com",
+  projectId: "todaywebsite",
+  storageBucket: "todaywebsite.firebasestorage.app",
+  messagingSenderId: "763086093521",
+  appId: "1:763086093521:web:5733aa6417544cedc299f0",
+  measurementId: "G-ZWZ8MEPHF8"
 };
 
+// 🔥 Firebase initialiseren
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const reviewList = document.getElementById("review-list");
 
-// Reviews laden en tonen
-export async function loadReviews() {
+// 📥 Reviews ophalen
+async function loadReviews() {
   if (!reviewList) return;
-  reviewList.innerHTML = "<p>Laden...</p>";
+  reviewList.innerHTML = "<p>Reviews laden...</p>";
 
   const q = query(collection(db, "reviews"), orderBy("timestamp", "desc"));
   const snapshot = await getDocs(q);
@@ -46,7 +48,7 @@ export async function loadReviews() {
   });
 }
 
-// Review insturen
+// 📤 Review toevoegen
 window.submitReview = async function () {
   const name = document.getElementById("name").value.trim();
   const text = document.getElementById("text").value.trim();
@@ -57,6 +59,7 @@ window.submitReview = async function () {
     return;
   }
 
+  // Opslaan in Firestore
   await addDoc(collection(db, "reviews"), {
     name,
     text,
@@ -64,7 +67,7 @@ window.submitReview = async function () {
     timestamp: Date.now()
   });
 
-  // Automatisch bericht van Pixlguy
+  // Automatisch antwoord van Pixlguy
   await addDoc(collection(db, "reviews"), {
     name: "Pixlguy",
     text: "Love G ❤️",
@@ -72,12 +75,14 @@ window.submitReview = async function () {
     timestamp: Date.now()
   });
 
+  // Reset form
   document.getElementById("name").value = "";
   document.getElementById("text").value = "";
   document.getElementById("stars").value = "5";
 
+  // Herladen
   loadReviews();
 };
 
-// Start reviews laden bij openen
+// 🚀 Laad reviews bij start
 if (reviewList) loadReviews();
