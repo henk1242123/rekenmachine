@@ -1,194 +1,27 @@
 <!DOCTYPE html>
 <html lang="nl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
   <title>Today Comeback</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: linear-gradient(to bottom, #b3e5fc, #fff);
-      color: #333;
-      text-align: center;
-    }
-    header {
-      padding: 20px;
-    }
-    nav {
-      margin: 20px;
-    }
-    nav a {
-      margin: 0 15px;
-      font-weight: bold;
-      color: #333;
-      text-decoration: none;
-    }
-    nav a:hover {
-      text-decoration: underline;
-    }
-    section {
-      padding: 40px 20px;
-    }
-    .review-form {
-      max-width: 400px;
-      margin: auto;
-      text-align: left;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    }
-    input, textarea, button {
-      width: 100%;
-      margin: 8px 0;
-      padding: 10px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-    button {
-      background: #0288d1;
-      color: white;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .review {
-      background: white;
-      padding: 15px;
-      margin: 15px auto;
-      border-radius: 12px;
-      max-width: 500px;
-      text-align: left;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    }
-    .review strong {
-      display: block;
-      font-size: 1.1em;
-      margin-bottom: 5px;
-    }
-    .stars {
-      color: gold;
-    }
-    .discord-btn {
-      background: #5865f2;
-      color: white;
-      padding: 12px 20px;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: bold;
-      display: inline-block;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <div id="parallax-bg"></div>
   <header>
-    <img src="logo.png" alt="Server Logo" width="120" />
+    <img src="logo.png" alt="Server Logo">
     <h1>Today Comeback</h1>
     <p>FiveM Roleplay Server</p>
   </header>
-
   <nav>
-    <a href="#about">Over Mij</a>
-    <a href="#reviews">Reviews</a>
-    <a href="#discord">Discord</a>
+    <a href="index.html">Home</a>
+    <a href="about.html">Over Mij</a>
+    <a href="reviews.html">Reviews</a>
+    <a href="discord.html">Discord</a>
   </nav>
-
-  <section id="about">
-    <h2>Over Mij</h2>
-    <p><strong>Staff Rank:</strong> Admin</p>
-    <p><strong>Job1:</strong> Kmar</p>
-    <p><strong>Job2:</strong> DSI</p>
+  <section>
+    <h2>Welkom bij Today Comeback</h2>
+    <p>De ultieme FiveM roleplay ervaring. Join ons avontuur!</p>
   </section>
-
-  <section id="reviews">
-    <h2>Reviews</h2>
-    <div class="review-form">
-      <input type="text" id="name" placeholder="Jouw naam" />
-      <textarea id="text" placeholder="Schrijf je review..."></textarea>
-      <label>Sterren:</label>
-      <select id="stars">
-        <option value="1">⭐</option>
-        <option value="2">⭐⭐</option>
-        <option value="3">⭐⭐⭐</option>
-        <option value="4">⭐⭐⭐⭐</option>
-        <option value="5">⭐⭐⭐⭐⭐</option>
-      </select>
-      <button onclick="submitReview()">Plaats Review</button>
-    </div>
-    <div id="review-list"></div>
-  </section>
-
-  <section id="discord">
-    <h2>Join onze Discord</h2>
-    <a href="https://discord.gg/today" target="_blank" class="discord-btn">
-      🎮 Join Discord
-    </a>
-  </section>
-
-  <!-- Firebase SDK -->
-  <script type="module">
-    // Import Firebase
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.0.1/firebase-firestore.js";
-
-    // 🔥 Vul je eigen Firebase config hier in
-    const firebaseConfig = {
-  apiKey: "AIzaSyCT0fcygfz-RkK15LkRzDtu6VerIEzI0fk",
-  authDomain: "today-6828b.firebaseapp.com",
-  projectId: "today-6828b",
-  storageBucket: "today-6828b.firebasestorage.app",
-  messagingSenderId: "107632990693",
-  appId: "1:107632990693:web:e6aae5432e5d4ee655770c"
-};
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-
-    const reviewList = document.getElementById("review-list");
-
-    async function loadReviews() {
-      reviewList.innerHTML = "";
-      const querySnapshot = await getDocs(collection(db, "reviews"));
-      querySnapshot.forEach((doc) => {
-        const r = doc.data();
-        reviewList.innerHTML += `
-          <div class="review">
-            <strong>${r.name}</strong>
-            <div class="stars">${"⭐".repeat(r.stars)}</div>
-            <p>${r.text}</p>
-          </div>
-        `;
-      });
-    }
-
-    window.submitReview = async function () {
-      const name = document.getElementById("name").value;
-      const text = document.getElementById("text").value;
-      const stars = parseInt(document.getElementById("stars").value);
-
-      if (!name || !text) {
-        alert("Vul alle velden in!");
-        return;
-      }
-
-      // Voeg review toe
-      await addDoc(collection(db, "reviews"), { name, text, stars });
-
-      // Automatische reactie van Pixlguy
-      await addDoc(collection(db, "reviews"), {
-        name: "Pixlguy",
-        text: "Thx maat ❤️",
-        stars: 5,
-      });
-
-      document.getElementById("name").value = "";
-      document.getElementById("text").value = "";
-      document.getElementById("stars").value = "5";
-
-      loadReviews();
-    };
-
-    loadReviews();
-  </script>
+  <script type="module" src="script.js"></script>
 </body>
 </html>
